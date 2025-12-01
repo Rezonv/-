@@ -1,0 +1,171 @@
+:root {
+    --ak-bg-dark: #121212;
+    --ak-bg-panel: rgba(30, 30, 30, 0.95);
+    --ak-accent-cyan: #00F0FF;
+    --ak-accent-yellow: #FFD700;
+    --ak-accent-red: #FF3333;
+    --ak-text-main: #FFFFFF;
+    --ak-text-sub: #AAAAAA;
+    --ak-border-color: rgba(255, 255, 255, 0.1);
+}
+
+/* Utility Classes */
+.ak-bg-dark {
+    background-color: var(--ak-bg-dark);
+}
+
+.ak-text-cyan {
+    color: var(--ak-accent-cyan);
+}
+
+.ak-text-yellow {
+    color: var(--ak-accent-yellow);
+}
+
+/* Rhomboid Button */
+.ak-button {
+    position: relative;
+    background: var(--ak-bg-panel);
+    border: 1px solid var(--ak-border-color);
+    color: var(--ak-text-main);
+    padding: 0.5rem 1.5rem;
+    font-family: monospace;
+    font-weight: bold;
+    text-transform: uppercase;
+    transition: all 0.2s ease;
+    clip-path: polygon(10px 0, 100% 0, 100% calc(100% - 10px), calc(100% - 10px) 100%, 0 100%, 0 10px);
+}
+
+.ak-button:hover {
+    background: var(--ak-accent-cyan);
+    color: #000;
+    border-color: var(--ak-accent-cyan);
+    box-shadow: 0 0 15px rgba(0, 240, 255, 0.5);
+}
+
+.ak-button.active {
+    background: var(--ak-accent-yellow);
+    color: #000;
+    border-color: var(--ak-accent-yellow);
+}
+
+/* Panel Style */
+.ak-panel {
+    background: var(--ak-bg-panel);
+    border: 1px solid var(--ak-border-color);
+    backdrop-filter: blur(10px);
+    position: relative;
+}
+
+.ak-panel::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 20px;
+    height: 20px;
+    border-top: 2px solid var(--ak-accent-cyan);
+    border-left: 2px solid var(--ak-accent-cyan);
+    pointer-events: none;
+}
+
+.ak-panel::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    right: 0;
+    width: 20px;
+    height: 20px;
+    border-bottom: 2px solid var(--ak-accent-cyan);
+    border-right: 2px solid var(--ak-accent-cyan);
+    pointer-events: none;
+}
+
+/* Tile Menu Item */
+.ak-tile {
+    background: rgba(0, 0, 0, 0.6);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    overflow: hidden;
+}
+
+.ak-tile:hover {
+    background: rgba(0, 240, 255, 0.1);
+    border-color: var(--ak-accent-cyan);
+    transform: translateY(-2px);
+}
+
+.ak-tile::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(45deg, transparent 40%, rgba(255, 255, 255, 0.1) 45%, transparent 50%);
+    transform: translateX(-100%);
+    transition: transform 0.5s;
+}
+
+.ak-tile:hover::before {
+    transform: translateX(100%);
+}
+
+/* Scanline Effect */
+.ak-scanline {
+    background: linear-gradient(to bottom, rgba(255, 255, 255, 0), rgba(255, 255, 255, 0) 50%, rgba(0, 0, 0, 0.1) 50%, rgba(0, 0, 0, 0.1));
+    background-size: 100% 4px;
+    pointer-events: none;
+}
+
+/* Glitch Text Animation */
+@keyframes glitch {
+    0% {
+        transform: translate(0)
+    }
+
+    20% {
+        transform: translate(-2px, 2px)
+    }
+
+    40% {
+        transform: translate(-2px, -2px)
+    }
+
+    60% {
+        transform: translate(2px, 2px)
+    }
+
+    80% {
+        transform: translate(2px, -2px)
+    }
+
+    100% {
+        transform: translate(0)
+    }
+}
+
+.ak-glitch:hover {
+    animation: glitch 0.3s cubic-bezier(.25, .46, .45, .94) both infinite;
+    color: var(--ak-accent-red);
+}
+
+/* Entrance Animation */
+@keyframes slideInRight {
+    from {
+        opacity: 0;
+        transform: translateX(50px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+.animate-slide-in-right {
+    opacity: 0;
+    /* Start hidden */
+    animation: slideInRight 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
