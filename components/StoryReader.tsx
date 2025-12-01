@@ -22,6 +22,7 @@ interface Props {
   onOpenShop: () => void;
   onSendGift: (item: InventoryItem) => void;
   onUploadUserImage: (file: File) => void;
+  onUpdateAffection?: (newAffection: number) => void; // New Prop
 }
 
 // --- Visual Progress Bar Component ---
@@ -76,13 +77,40 @@ const StoryReader: React.FC<Props> = ({
   inventory,
   onOpenShop,
   onSendGift,
-  onUploadUserImage
+  onUploadUserImage,
+  onUpdateAffection
 }) => {
   const bottomRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [customInput, setCustomInput] = useState("");
   const [isInventoryOpen, setIsInventoryOpen] = useState(false);
   const [useSearch, setUseSearch] = useState(false);
+
+  // Image Navigation State
+  const imageSegments = segments.filter(s => s.imageUrl);
+  const [viewingImageIndex, setViewingImageIndex] = useState(imageSegments.length - 1);
+
+  // Affection Edit State
+  const [isEditingAffection, setIsEditingAffection] = useState(false);
+  const [tempAffection, setTempAffection] = useState(currentAffection.toString());
+
+  // Update viewing index when new images arrive
+  useEffect(() => {
+    setViewingImageIndex(imageSegments.length - 1);
+  }, [imageSegments.length]);
+
+  // Sync temp affection when prop changes
+  useEffect(() => {
+    setTempAffection(currentAffection.toString());
+  }, [currentAffection]);
+
+  const handleAffectionUpdate = () => {
+    const val = parseInt(tempAffection);
+    if (!isNaN(val) && onUpdateAffection) {
+      onUpdateAffection(val);
+      setIsEditingAffection(false);
+    }
+  };
 
   // Image Edit Modal State
   const [editingImageId, setEditingImageId] = useState<string | null>(null);
@@ -188,7 +216,7 @@ const StoryReader: React.FC<Props> = ({
   const affState = getAffectionState(currentAffection);
 
   return (
-    <div className="h-screen max-w-4xl mx-auto bg-gray-900 flex flex-col shadow-2xl overflow-hidden relative">
+    <div className="h-screen max-w-[95vw] mx-auto bg-gray-900 flex flex-col shadow-2xl overflow-hidden relative">
 
       {/* Fixed Header / Toolbar (Shrink-0) */}
       <div className="shrink-0 z-30 bg-gray-900 border-b border-gray-800 px-4 py-3 flex items-center justify-between shadow-lg">
@@ -214,12 +242,34 @@ const StoryReader: React.FC<Props> = ({
                   <span className={`${affState.tierColor}`}>{affState.tierName}</span>
                   <span className="text-gray-500">{Math.round(affState.percentage)}%</span>
                 </div>
-                <div className="relative w-32 sm:w-48 h-1.5 bg-gray-800 rounded-full overflow-hidden">
+                <div className="relative w-32 sm:w-48 h-1.5 bg-gray-800 rounded-full overflow-hidden group">
                   <div
                     className={`h-full transition-all duration-700 ease-out rounded-full bg-gradient-to-r ${affState.tierGradient}`}
                     style={{ width: `${affState.percentage}%` }}
                   ></div>
                 </div>
+
+                {/* Affection Edit Control */}
+                {isEditingAffection ? (
+                  <div className="absolute top-8 left-0 bg-gray-800 p-2 rounded border border-gray-600 flex gap-1 z-50 shadow-xl">
+                    <input
+                      type="number"
+                      value={tempAffection}
+                      onChange={(e) => setTempAffection(e.target.value)}
+                      className="w-16 bg-gray-900 text-white text-xs p-1 rounded border border-gray-700"
+                    />
+                    <button onClick={handleAffectionUpdate} className="text-green-400 hover:text-green-300 px-1">✓</button>
+                    <button onClick={() => setIsEditingAffection(false)} className="text-red-400 hover:text-red-300 px-1">✕</button>
+                  </div>
+                ) : (
+                  <button
+                    onClick={() => setIsEditingAffection(true)}
+                    className="opacity-0 group-hover:opacity-100 absolute -right-6 top-0 text-gray-500 hover:text-white transition-opacity"
+                    title="修改好感度 (Cheat)"
+                  >
+                    ✏️
+                  </button>
+                )}
               </div>
             </div>
           </div>
@@ -251,205 +301,272 @@ const StoryReader: React.FC<Props> = ({
         </div>
       </div>
 
-      {/* Scrollable Story Content (Flex-1) */}
-      <div className="flex-1 overflow-y-auto p-4 sm:p-8 space-y-8 pb-8 bg-gradient-to-b from-gray-900 to-gray-900 custom-scrollbar relative">
-        {segments.length === 0 && (
-          <div className="flex flex-col items-center justify-center py-20 text-gray-500 animate-pulse space-y-4">
-            <div className="w-16 h-16 rounded-full bg-gray-800 animate-bounce flex items-center justify-center text-3xl">
-              💬
-            </div>
-            <p className="text-lg font-light">故事即將開始...</p>
-          </div>
-        )}
+      {/* Main Content Area (Flex Row) */}
+      <div className="flex-1 flex overflow-hidden">
 
-        {segments.map((segment) => (
-          <div key={segment.id} className={`flex flex-col gap-2 animate-fade-in ${segment.isUserChoice ? 'items-end' : 'items-start'}`}>
-
-            {segment.isUserChoice ? (
-              <div className="flex flex-col gap-2 items-end max-w-[85%]">
-                {segment.imageUrl && (
-                  <div className="rounded-xl overflow-hidden border border-pink-500/30 shadow-lg mb-1 max-w-xs relative group">
-                    <img src={segment.imageUrl} className="w-full h-full object-cover" />
-                    <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
-                      <button onClick={() => openEditModal(segment.id, segment.imageUrl!)} className="text-xs bg-gray-800 px-2 py-1 rounded text-gray-300 hover:text-white border border-gray-600">✏️ 編輯</button>
-                    </div>
-                  </div>
-                )}
-                <div className="bg-gradient-to-br from-pink-900/40 to-purple-900/40 border border-pink-500/20 rounded-2xl rounded-tr-none px-6 py-4 backdrop-blur-sm shadow-sm">
-                  <p className="text-pink-100 font-medium text-base">{segment.text}</p>
+        {/* Left Panel Container (Flex Col) */}
+        <div className="flex-1 flex flex-col min-w-0 border-r border-gray-800">
+          {/* Chat History (Flex-1) */}
+          <div className="flex-1 overflow-y-auto p-4 sm:p-8 space-y-8 pb-8 bg-gradient-to-b from-gray-900 to-gray-900 custom-scrollbar relative">
+            {segments.length === 0 && (
+              <div className="flex flex-col items-center justify-center py-20 text-gray-500 animate-pulse space-y-4">
+                <div className="w-16 h-16 rounded-full bg-gray-800 animate-bounce flex items-center justify-center text-3xl">
+                  💬
                 </div>
+                <p className="text-lg font-light">故事即將開始...</p>
               </div>
-            ) : (
-              <div className="w-full group relative pl-4 sm:pl-0">
-                {segment.affectionChange !== undefined && segment.affectionChange !== 0 && (
-                  <div className={`absolute -top-6 left-0 sm:-left-4 animate-bounce z-20`}>
-                    <div className={`flex items-center gap-1 px-3 py-1.5 rounded-full shadow-xl border backdrop-blur-md text-xs font-bold transform transition-transform
-                        ${segment.affectionChange > 0
-                        ? 'bg-pink-600/90 border-pink-400 text-white'
-                        : 'bg-slate-700/90 border-slate-500 text-slate-200'}`}
-                    >
-                      <span>{segment.affectionChange > 0 ? '❤️ +' : '💔 '}{segment.affectionChange}</span>
-                      {segment.affectionSource && <span className="font-normal opacity-90 border-l border-white/20 pl-1 ml-1 truncate max-w-[150px]">{segment.affectionSource}</span>}
+            )}
+
+            {segments.map((segment) => (
+              <div key={segment.id} className={`flex flex-col gap-2 animate-fade-in ${segment.isUserChoice ? 'items-end' : 'items-start'}`}>
+
+                {segment.isUserChoice ? (
+                  <div className="flex flex-col gap-2 items-end max-w-[85%]">
+                    <div className="bg-gradient-to-br from-pink-900/40 to-purple-900/40 border border-pink-500/20 rounded-2xl rounded-tr-none px-6 py-4 backdrop-blur-sm shadow-sm">
+                      <p className="text-pink-100 font-medium text-base">{segment.text}</p>
                     </div>
                   </div>
-                )}
-
-                <div className="relative bg-gray-800/40 hover:bg-gray-800/60 transition-colors rounded-xl p-4 sm:p-6 border border-transparent hover:border-gray-700/50">
-                  <button
-                    onClick={() => onToggleFavorite(segment.id)}
-                    className={`absolute top-2 right-2 p-2 transition-all z-10 rounded-full hover:bg-gray-700/50 ${segment.isFavorited
-                        ? 'text-pink-500 opacity-100 scale-110'
-                        : 'text-gray-500 opacity-0 group-hover:opacity-100 hover:text-pink-400'
-                      }`}
-                  >
-                    <svg xmlns="http://www.w3.org/2000/svg" className={`h-5 w-5 ${segment.isFavorited ? 'fill-current' : 'fill-none stroke-current'}`} viewBox="0 0 24 24" strokeWidth="2">
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
-                    </svg>
-                  </button>
-
-                  {/* TTS Play Button */}
-                  <button
-                    onClick={() => handlePlaySpeech(segment.id, segment.text)}
-                    disabled={!!playingSegmentId}
-                    className={`absolute top-2 right-10 p-2 transition-all z-10 rounded-full hover:bg-gray-700/50 ${playingSegmentId === segment.id
-                        ? 'text-pink-400 animate-pulse'
-                        : 'text-gray-500 opacity-0 group-hover:opacity-100 hover:text-pink-400'
-                      }`}
-                    title="播放語音 (TTS)"
-                  >
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" />
-                    </svg>
-                  </button>
-
-                  <div className="text-gray-200 leading-relaxed text-lg whitespace-pre-wrap font-light tracking-wide mb-4">
-                    {segment.text}
-                  </div>
-
-                  {/* Display Image if exists */}
-                  {segment.imageUrl && (
-                    <div className="rounded-xl overflow-hidden shadow-2xl border border-gray-700 mb-4 group/img relative max-w-2xl mx-auto">
-                      <img src={segment.imageUrl} alt="Scene illustration" className="w-full h-auto object-contain max-h-[80vh] shadow-lg" />
-
-                      {/* New Generation Progress Overlay */}
-                      {generatingSegmentId === segment.id && appState === AppState.GENERATING_IMAGE && (
-                        <div className="absolute inset-0 bg-black/60 flex flex-col items-center justify-center p-6 backdrop-blur-sm">
-                          <div className="text-pink-400 font-bold animate-pulse mb-2">AI 繪圖中 (Processing...)</div>
-                          <ProgressBar isActive={true} />
-                        </div>
-                      )}
-
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-0 group-hover/img:opacity-100 transition-opacity duration-300 flex items-end p-4 justify-between">
-                        <div className="flex gap-2">
-                          <button
-                            onClick={() => openEditModal(segment.id, segment.imageUrl!)}
-                            className="bg-white/10 hover:bg-white/20 backdrop-blur text-white px-3 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1 border border-white/10"
-                          >
-                            🪄 編輯 (Nano)
-                          </button>
+                ) : (
+                  <div className="w-full group relative pl-4 sm:pl-0">
+                    {segment.affectionChange !== undefined && segment.affectionChange !== 0 && (
+                      <div className={`absolute -top-6 left-0 sm:-left-4 animate-bounce z-20`}>
+                        <div className={`flex items-center gap-1 px-3 py-1.5 rounded-full shadow-xl border backdrop-blur-md text-xs font-bold transform transition-transform
+                            ${segment.affectionChange > 0
+                            ? 'bg-pink-600/90 border-pink-400 text-white'
+                            : 'bg-slate-700/90 border-slate-500 text-slate-200'}`}
+                        >
+                          <span>{segment.affectionChange > 0 ? '❤️ +' : '💔 '}{segment.affectionChange}</span>
+                          {segment.affectionSource && <span className="font-normal opacity-90 border-l border-white/20 pl-1 ml-1 truncate max-w-[150px]">{segment.affectionSource}</span>}
                         </div>
                       </div>
-                    </div>
-                  )}
+                    )}
 
-                  {!segment.imageUrl && !segment.videoUrl && (
-                    <div className="flex flex-col w-full max-w-md mx-auto">
-                      {generatingSegmentId === segment.id ? (
-                        <div className="bg-gray-800/50 rounded-xl p-4 border border-pink-500/30">
-                          <div className="flex items-center gap-2 mb-2 text-pink-400 text-xs font-bold uppercase tracking-widest">
-                            <span className="w-2 h-2 rounded-full bg-pink-500 animate-pulse"></span>
-                            Generating Image...
-                          </div>
-                          <ProgressBar isActive={true} />
-                        </div>
-                      ) : (
-                        <div className="flex justify-end">
+                    <div className="relative bg-gray-800/40 hover:bg-gray-800/60 transition-colors rounded-xl p-4 sm:p-6 border border-transparent hover:border-gray-700/50">
+                      <button
+                        onClick={() => onToggleFavorite(segment.id)}
+                        className={`absolute top-2 right-2 p-2 transition-all z-10 rounded-full hover:bg-gray-700/50 ${segment.isFavorited
+                          ? 'text-pink-500 opacity-100 scale-110'
+                          : 'text-gray-500 opacity-0 group-hover:opacity-100 hover:text-pink-400'
+                          }`}
+                      >
+                        <svg xmlns="http://www.w3.org/2000/svg" className={`h-5 w-5 ${segment.isFavorited ? 'fill-current' : 'fill-none stroke-current'}`} viewBox="0 0 24 24" strokeWidth="2">
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+                        </svg>
+                      </button>
+
+                      {/* TTS Play Button */}
+                      <button
+                        onClick={() => handlePlaySpeech(segment.id, segment.text)}
+                        disabled={!!playingSegmentId}
+                        className={`absolute top-2 right-10 p-2 transition-all z-10 rounded-full hover:bg-gray-700/50 ${playingSegmentId === segment.id
+                          ? 'text-pink-400 animate-pulse'
+                          : 'text-gray-500 opacity-0 group-hover:opacity-100 hover:text-pink-400'
+                          }`}
+                        title="播放語音 (TTS)"
+                      >
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" />
+                        </svg>
+                      </button>
+
+                      <div className="text-gray-200 leading-relaxed text-lg whitespace-pre-wrap font-light tracking-wide mb-4">
+                        {segment.text}
+                      </div>
+
+                      {/* Image Link Button (Small) */}
+                      {segment.imageUrl && (
+                        <div className="flex items-center gap-2 mt-2">
                           <button
-                            onClick={() => onGenerateImage(segment.id, segment.text)}
-                            className="flex items-center gap-2 px-4 py-2 rounded-full border text-sm font-medium transition-all bg-transparent border-pink-500/30 text-pink-400 hover:bg-pink-600 hover:text-white hover:border-pink-500"
+                            onClick={() => openEditModal(segment.id, segment.imageUrl!)}
+                            className="text-xs text-pink-400 hover:text-pink-300 flex items-center gap-1 hover:underline"
                           >
-                            <span>🎨 生成此場景插圖</span>
+                            <span>📸 查看/編輯圖片</span>
                           </button>
                         </div>
                       )}
+
+                      {!segment.imageUrl && !segment.videoUrl && (
+                        <div className="flex flex-col w-full max-w-md mx-auto mt-2">
+                          {generatingSegmentId === segment.id ? (
+                            <div className="bg-gray-800/50 rounded-xl p-4 border border-pink-500/30">
+                              <div className="flex items-center gap-2 mb-2 text-pink-400 text-xs font-bold uppercase tracking-widest">
+                                <span className="w-2 h-2 rounded-full bg-pink-500 animate-pulse"></span>
+                                Generating Image...
+                              </div>
+                              <ProgressBar isActive={true} />
+                            </div>
+                          ) : (
+                            <div className="flex justify-end">
+                              <button
+                                onClick={() => onGenerateImage(segment.id, segment.text)}
+                                className="flex items-center gap-2 px-3 py-1.5 rounded-full border text-xs font-medium transition-all bg-transparent border-pink-500/30 text-pink-400 hover:bg-pink-600 hover:text-white hover:border-pink-500"
+                              >
+                                <span>🎨 生成此場景插圖</span>
+                              </button>
+                            </div>
+                          )}
+                        </div>
+                      )}
                     </div>
-                  )}
+                  </div>
+                )}
+              </div>
+            ))}
+
+            {appState === AppState.GENERATING_TEXT && (
+              <div className="flex items-center gap-4 text-gray-400 p-4 bg-gray-800/20 rounded-xl border border-gray-800 animate-pulse">
+                <div className="w-10 h-10 rounded-full bg-gray-700 flex-shrink-0 overflow-hidden">
+                  <img src={customAvatar || character.avatarUrl} className="w-full h-full object-cover opacity-50" />
+                </div>
+                <div className="flex items-center gap-1">
+                  <span className="text-sm font-medium text-pink-500">{character.name} 正在思考...</span>
                 </div>
               </div>
             )}
+
+            <div ref={bottomRef} />
           </div>
-        ))}
 
-        {appState === AppState.GENERATING_TEXT && (
-          <div className="flex items-center gap-4 text-gray-400 p-4 bg-gray-800/20 rounded-xl border border-gray-800 animate-pulse">
-            <div className="w-10 h-10 rounded-full bg-gray-700 flex-shrink-0 overflow-hidden">
-              <img src={customAvatar || character.avatarUrl} className="w-full h-full object-cover opacity-50" />
+          {/* Footer Input (Moved Inside Left Column) */}
+          {(appState === AppState.WAITING_FOR_INPUT || currentOptions.length > 0) && (
+            <div className="shrink-0 p-4 bg-gray-900/95 backdrop-blur-lg border-t border-gray-800/50 shadow-[0_-10px_40px_rgba(0,0,0,0.5)] z-40">
+              <div className="w-full flex flex-col gap-4">
+
+                {/* Search Toggle */}
+                <div className="flex justify-end">
+                  <label className={`flex items-center gap-2 text-xs font-bold cursor-pointer select-none transition-colors px-3 py-1 rounded-full border ${useSearch ? 'bg-blue-900/30 border-blue-500 text-blue-400' : 'bg-gray-800 border-gray-700 text-gray-500'}`}>
+                    <input type="checkbox" checked={useSearch} onChange={e => setUseSearch(e.target.checked)} className="hidden" />
+                    <div className={`w-3 h-3 rounded-full ${useSearch ? 'bg-blue-400' : 'bg-gray-600'}`}></div>
+                    Google Search
+                  </label>
+                </div>
+
+                <form onSubmit={handleCustomSubmit} className="flex gap-2 relative items-center">
+                  <button
+                    type="button"
+                    onClick={() => fileInputRef.current?.click()}
+                    className="bg-gray-800 hover:bg-gray-700 text-gray-400 hover:text-white p-3 rounded-xl border border-gray-700 transition-colors"
+                    title="上傳圖片"
+                  >
+                    🖼️
+                  </button>
+                  <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleFileUpload} />
+
+                  <input
+                    type="text"
+                    value={customInput}
+                    onChange={(e) => setCustomInput(e.target.value)}
+                    placeholder={useSearch ? "輸入問題來搜尋最新資訊..." : "輸入行動或對話..."}
+                    className="flex-1 bg-gray-800 text-white rounded-xl pl-4 pr-12 py-3.5 border border-gray-700 focus:border-pink-500 focus:outline-none"
+                  />
+                  <button
+                    type="submit"
+                    disabled={!customInput.trim()}
+                    className="absolute right-2 top-2 bottom-2 bg-pink-600 hover:bg-pink-500 disabled:opacity-0 text-white aspect-square rounded-lg flex items-center justify-center"
+                  >
+                    ➤
+                  </button>
+                </form>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 max-h-[30vh] overflow-y-auto pr-1 custom-scrollbar">
+                  {currentOptions.map((option, idx) => (
+                    <button
+                      key={idx}
+                      onClick={() => onOptionSelect(option, useSearch)}
+                      className="px-5 py-4 rounded-xl bg-gray-800 hover:bg-gray-750 border border-gray-700 hover:border-pink-500 text-left transition-all"
+                    >
+                      <span className="block font-bold text-gray-200 text-sm mb-1">{option.label}</span>
+                      <span className="text-xs text-gray-500 block truncate">{option.action}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
             </div>
-            <div className="flex items-center gap-1">
-              <span className="text-sm font-medium text-pink-500">{character.name} 正在思考...</span>
-            </div>
+          )}
+        </div>
+
+        {/* Right Panel: Dedicated Image Display (50% Width) */}
+        <div className="w-1/2 bg-gray-900 border-l border-gray-800 flex flex-col shrink-0 p-4 shadow-2xl z-20 hidden md:flex">
+          <h3 className="text-lg font-bold text-pink-400 mb-4 flex items-center gap-2">
+            <span className="text-2xl">📸</span>
+            劇情寫真
+          </h3>
+
+          <div className="flex-1 bg-gray-800 rounded-2xl border border-gray-700 overflow-hidden relative flex items-center justify-center group">
+            {imageSegments.length > 0 && imageSegments[viewingImageIndex] ? (
+              <>
+                <img
+                  src={imageSegments[viewingImageIndex].imageUrl}
+                  className="w-full h-full object-contain transition-transform duration-700 group-hover:scale-105"
+                />
+
+                {/* Navigation Buttons */}
+                {viewingImageIndex > 0 && (
+                  <button
+                    onClick={() => setViewingImageIndex(prev => Math.max(0, prev - 1))}
+                    className="absolute left-4 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/80 text-white p-3 rounded-full backdrop-blur-sm transition-all z-20 opacity-0 group-hover:opacity-100"
+                  >
+                    ◀
+                  </button>
+                )}
+                {viewingImageIndex < imageSegments.length - 1 && (
+                  <button
+                    onClick={() => setViewingImageIndex(prev => Math.min(imageSegments.length - 1, prev + 1))}
+                    className="absolute right-4 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/80 text-white p-3 rounded-full backdrop-blur-sm transition-all z-20 opacity-0 group-hover:opacity-100"
+                  >
+                    ▶
+                  </button>
+                )}
+
+                <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-end justify-center p-6 gap-2 pointer-events-none">
+                  <div className="pointer-events-auto flex gap-2 transform translate-y-4 group-hover:translate-y-0 transition-all">
+                    <button
+                      onClick={() => window.open(imageSegments[viewingImageIndex].imageUrl, '_blank')}
+                      className="bg-pink-600 hover:bg-pink-500 text-white px-4 py-2 rounded-full font-bold shadow-lg text-sm"
+                    >
+                      查看原圖
+                    </button>
+                    <button
+                      onClick={() => openEditModal(imageSegments[viewingImageIndex].id, imageSegments[viewingImageIndex].imageUrl!)}
+                      className="bg-gray-700 hover:bg-gray-600 text-white px-4 py-2 rounded-full font-bold shadow-lg text-sm border border-gray-600"
+                    >
+                      編輯
+                    </button>
+                  </div>
+                </div>
+
+                {/* Image Counter Badge */}
+                <div className="absolute top-4 right-4 bg-black/60 text-white text-xs px-2 py-1 rounded-full backdrop-blur-md">
+                  {viewingImageIndex + 1} / {imageSegments.length}
+                </div>
+
+                {/* Progress Overlay for Dedicated Panel */}
+                {appState === AppState.GENERATING_IMAGE && (
+                  <div className="absolute inset-0 bg-black/70 flex flex-col items-center justify-center p-8 backdrop-blur-sm z-20">
+                    <div className="text-pink-400 font-bold animate-pulse mb-4 text-lg">
+                      {generatingSegmentId === imageSegments[viewingImageIndex].id ? 'AI 修圖中...' : 'AI 繪圖中...'}
+                    </div>
+                    <ProgressBar isActive={true} />
+                  </div>
+                )}
+              </>
+            ) : (
+              <div className="text-gray-500 flex flex-col items-center gap-2">
+                <span className="text-4xl opacity-30">🖼️</span>
+                <p className="text-sm">尚未生成圖片</p>
+              </div>
+            )}
           </div>
-        )}
 
-        <div ref={bottomRef} />
-      </div>
-
-      {/* Footer Input (Fixed Bottom) */}
-      {(appState === AppState.WAITING_FOR_INPUT || currentOptions.length > 0) && (
-        <div className="shrink-0 p-4 bg-gray-900/95 backdrop-blur-lg border-t border-gray-800/50 shadow-[0_-10px_40px_rgba(0,0,0,0.5)] z-40">
-          <div className="max-w-3xl mx-auto flex flex-col gap-4">
-
-            {/* Search Toggle */}
-            <div className="flex justify-end">
-              <label className={`flex items-center gap-2 text-xs font-bold cursor-pointer select-none transition-colors px-3 py-1 rounded-full border ${useSearch ? 'bg-blue-900/30 border-blue-500 text-blue-400' : 'bg-gray-800 border-gray-700 text-gray-500'}`}>
-                <input type="checkbox" checked={useSearch} onChange={e => setUseSearch(e.target.checked)} className="hidden" />
-                <div className={`w-3 h-3 rounded-full ${useSearch ? 'bg-blue-400' : 'bg-gray-600'}`}></div>
-                Google Search
-              </label>
-            </div>
-
-            <form onSubmit={handleCustomSubmit} className="flex gap-2 relative items-center">
-              <button
-                type="button"
-                onClick={() => fileInputRef.current?.click()}
-                className="bg-gray-800 hover:bg-gray-700 text-gray-400 hover:text-white p-3 rounded-xl border border-gray-700 transition-colors"
-                title="上傳圖片"
-              >
-                🖼️
-              </button>
-              <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleFileUpload} />
-
-              <input
-                type="text"
-                value={customInput}
-                onChange={(e) => setCustomInput(e.target.value)}
-                placeholder={useSearch ? "輸入問題來搜尋最新資訊..." : "輸入行動或對話..."}
-                className="flex-1 bg-gray-800 text-white rounded-xl pl-4 pr-12 py-3.5 border border-gray-700 focus:border-pink-500 focus:outline-none"
-              />
-              <button
-                type="submit"
-                disabled={!customInput.trim()}
-                className="absolute right-2 top-2 bottom-2 bg-pink-600 hover:bg-pink-500 disabled:opacity-0 text-white aspect-square rounded-lg flex items-center justify-center"
-              >
-                ➤
-              </button>
-            </form>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 max-h-[30vh] overflow-y-auto pr-1 custom-scrollbar">
-              {currentOptions.map((option, idx) => (
-                <button
-                  key={idx}
-                  onClick={() => onOptionSelect(option, useSearch)}
-                  className="px-5 py-4 rounded-xl bg-gray-800 hover:bg-gray-750 border border-gray-700 hover:border-pink-500 text-left transition-all"
-                >
-                  <span className="block font-bold text-gray-200 text-sm mb-1">{option.label}</span>
-                  <span className="text-xs text-gray-500 block truncate">{option.action}</span>
-                </button>
-              ))}
-            </div>
+          <div className="mt-4 p-4 bg-gray-800/50 rounded-xl border border-gray-700/50">
+            <h4 className="text-xs font-bold text-gray-400 mb-2 uppercase tracking-wider">Scene Info</h4>
+            <p className="text-xs text-gray-500 font-mono break-all line-clamp-3">
+              {imageSegments[viewingImageIndex]?.text || 'Waiting for generation...'}
+            </p>
           </div>
         </div>
-      )}
+
+      </div>
 
       {/* Image Edit Modal */}
       {editingImageId && (

@@ -17,7 +17,7 @@ import { SHOP_ITEMS } from '../data/items';
 import { FACILITIES } from '../data/facilities';
 
 const DEFAULT_IMAGE_SETTINGS: ImageGenerationSettings = {
-    provider: 'gemini',
+    provider: 'novelai',
     customUrl: 'http://127.0.0.1:7860',
     generationMode: 'quality'
 };

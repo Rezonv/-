@@ -123,13 +123,13 @@ const DreamHomeChat: React.FC<Props> = ({
                 : 'bg-gray-800 text-gray-100 border border-gray-700 rounded-2xl rounded-bl-none'
                 }`}>
                 {msg.imageUrl ? (
-                  <div className="flex flex-row gap-4 items-start">
-                    <p className="flex-1 min-w-0 whitespace-pre-wrap">{msg.text}</p>
+                  <div className="flex flex-col gap-1">
+                    <p className="whitespace-pre-wrap">{msg.text}</p>
                     <div
-                      className="w-40 shrink-0 rounded-lg overflow-hidden border border-gray-600 shadow-lg cursor-pointer hover:opacity-90 transition-opacity"
+                      className="text-xs text-pink-400 flex items-center gap-1 cursor-pointer hover:underline"
                       onClick={() => window.open(msg.imageUrl, '_blank')}
                     >
-                      <img src={msg.imageUrl} alt="Generated" className="w-full h-auto object-cover" />
+                      <span>📸 查看生成的圖片</span>
                     </div>
                   </div>
                 ) : (

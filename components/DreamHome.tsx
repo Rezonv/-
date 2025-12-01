@@ -280,7 +280,7 @@ const DreamHome: React.FC<Props> = ({
     if (customText === '(generate_image)') {
       addDialogue(char.id, { type: 'user', text: "能讓我看看妳現在的樣子嗎？", timestamp: Date.now(), category: 'chat' });
       try {
-        const prompt = `Selfie in ${config.name}, ${char.appearance}`;
+        const prompt = `Selfie in ${config.name}, ${char.description.slice(0, 50)}`;
         const img = await generateCharacterImage(char, prompt, undefined, imageSettings);
         if (img) {
           addDialogue(char.id, { type: 'ai', text: "喜歡嗎？", imageUrl: img, timestamp: Date.now(), category: 'chat' });
@@ -422,7 +422,7 @@ const DreamHome: React.FC<Props> = ({
           )}
         </div>
 
-        {/* RIGHT PANEL */}
+        {/* CENTER PANEL (Chat) */}
         <DreamHomeChat
           activeChar={activeChar}
           activeFacility={activeFacility}
@@ -432,6 +432,45 @@ const DreamHome: React.FC<Props> = ({
           isGenerating={isGenerating}
           onInteraction={(type, text) => handleInteraction(type, text)}
         />
+
+        {/* RIGHT PANEL (Image Display) */}
+        <div className="w-full md:w-[400px] bg-gray-900 border-l border-gray-700 flex flex-col shrink-0 overflow-hidden shadow-2xl relative h-full p-4">
+          <h3 className="text-lg font-bold text-pink-400 mb-4 flex items-center gap-2">
+            <span className="text-2xl">📸</span>
+            最新寫真
+          </h3>
+
+          <div className="flex-1 bg-gray-800 rounded-2xl border border-gray-700 overflow-hidden relative flex items-center justify-center group">
+            {activeChar && interactionHistory[activeChar.id]?.slice().reverse().find(m => m.imageUrl)?.imageUrl ? (
+              <>
+                <img
+                  src={interactionHistory[activeChar.id]?.slice().reverse().find(m => m.imageUrl)?.imageUrl}
+                  className="w-full h-full object-contain transition-transform duration-700 group-hover:scale-105"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-end justify-center p-6">
+                  <button
+                    onClick={() => window.open(interactionHistory[activeChar.id]?.slice().reverse().find(m => m.imageUrl)?.imageUrl, '_blank')}
+                    className="bg-pink-600 hover:bg-pink-500 text-white px-6 py-2 rounded-full font-bold shadow-lg transform translate-y-4 group-hover:translate-y-0 transition-all"
+                  >
+                    查看原圖
+                  </button>
+                </div>
+              </>
+            ) : (
+              <div className="text-gray-500 flex flex-col items-center gap-2">
+                <span className="text-4xl opacity-30">🖼️</span>
+                <p className="text-sm">尚未生成圖片</p>
+              </div>
+            )}
+          </div>
+
+          <div className="mt-4 p-4 bg-gray-800/50 rounded-xl border border-gray-700/50">
+            <h4 className="text-xs font-bold text-gray-400 mb-2 uppercase tracking-wider">Prompt Info</h4>
+            <p className="text-xs text-gray-500 font-mono break-all">
+              {activeChar ? `Selfie in ${activeFacility?.name}, ${activeChar.description.slice(0, 20)}...` : 'Waiting for generation...'}
+            </p>
+          </div>
+        </div>
       </div>
 
       {/* Modals */}
