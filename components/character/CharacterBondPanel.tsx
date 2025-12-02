@@ -1,5 +1,5 @@
-
-import React, { useState } from 'react';
+```
+import React from 'react';
 import { Character, AffectionMilestone, SceneContext } from '../../types';
 
 interface Props {
@@ -14,16 +14,6 @@ interface Props {
 const CharacterBondPanel: React.FC<Props> = ({
     character, affection, bondInfo, milestones, onStartSpecialStory, onUpdateAffection
 }) => {
-    const [isEditing, setIsEditing] = useState(false);
-    const [editValue, setEditValue] = useState(affection);
-
-    const handleSave = () => {
-        if (onUpdateAffection) {
-            onUpdateAffection(character.id, editValue);
-            setIsEditing(false);
-        }
-    };
-
     return (
         <div className="space-y-8 animate-fade-in-right">
             <div className="bg-gradient-to-br from-pink-900/30 to-purple-900/30 p-6 rounded-2xl border border-pink-500/30 flex items-center gap-6 relative overflow-hidden">
@@ -32,7 +22,7 @@ const CharacterBondPanel: React.FC<Props> = ({
                 {/* Heart Animation */}
                 <div className="relative w-20 h-20 flex items-center justify-center shrink-0">
                     <div className="absolute inset-0 text-pink-900 text-7xl animate-pulse">♥</div>
-                    <div className="absolute inset-0 text-pink-500 text-7xl overflow-hidden" style={{ clipPath: `inset(${100 - (Math.min(affection, 500) / 500) * 100}% 0 0 0)` }}>♥</div>
+                    <div className="absolute inset-0 text-pink-500 text-7xl overflow-hidden" style={{ clipPath: `inset(${ 100 - (Math.min(affection, 500) / 500) * 100 } % 0 0 0)` }}>♥</div>
                     <div className="absolute bottom-0 text-[10px] font-bold text-white drop-shadow-md">{Math.floor((Math.min(affection, 500) / 500) * 100)}%</div>
                 </div>
 
@@ -40,52 +30,10 @@ const CharacterBondPanel: React.FC<Props> = ({
                     <div className="flex justify-between items-start">
                         <div>
                             <div className="text-sm text-pink-200 font-bold uppercase tracking-widest mb-1">羈絆等級 (BOND LEVEL)</div>
-                            <h3 className={`text-2xl font-black ${bondInfo.color}`}>{bondInfo.title}</h3>
+                            <h3 className={`text - 2xl font - black ${ bondInfo.color } `}>{bondInfo.title}</h3>
                         </div>
-                        {onUpdateAffection && (
-                            <button
-                                onClick={() => { setIsEditing(!isEditing); setEditValue(affection); }}
-                                className="text-xs bg-pink-500/20 hover:bg-pink-500/40 text-pink-300 px-2 py-1 rounded border border-pink-500/30 transition-colors"
-                            >
-                                {isEditing ? '取消' : '修改好感度'}
-                            </button>
-                        )}
                     </div>
-
-                    {isEditing ? (
-                        <div className="mt-3 bg-black/40 p-3 rounded-lg border border-pink-500/30 animate-fade-in">
-                            <div className="flex items-center gap-3 mb-2">
-                                <span className="text-xs text-gray-400">數值:</span>
-                                <input
-                                    type="number"
-                                    value={editValue}
-                                    onChange={(e) => setEditValue(Number(e.target.value))}
-                                    className="bg-gray-900 border border-gray-700 rounded px-2 py-1 text-sm w-20 text-center focus:border-pink-500 outline-none"
-                                />
-                                <button
-                                    onClick={handleSave}
-                                    className="bg-pink-600 hover:bg-pink-500 text-white text-xs px-3 py-1.5 rounded font-bold transition-colors"
-                                >
-                                    儲存
-                                </button>
-                            </div>
-                            <input
-                                type="range"
-                                min="0"
-                                max="1000"
-                                value={editValue}
-                                onChange={(e) => setEditValue(Number(e.target.value))}
-                                className="w-full h-1 bg-gray-700 rounded-lg appearance-none cursor-pointer accent-pink-500"
-                            />
-                            <div className="flex justify-between text-[10px] text-gray-500 mt-1">
-                                <span>0 (陌生)</span>
-                                <span>500 (戀人)</span>
-                                <span>1000 (靈魂伴侶)</span>
-                            </div>
-                        </div>
-                    ) : (
-                        <p className="text-xs text-pink-100/60 mt-1">{bondInfo.desc}</p>
-                    )}
+                    <p className="text-xs text-pink-100/60 mt-1">{bondInfo.desc}</p>
                 </div>
             </div>
 
@@ -96,8 +44,8 @@ const CharacterBondPanel: React.FC<Props> = ({
                     const isNext = !isUnlocked && (idx === 0 || affection >= milestones[idx - 1].reqAffection);
 
                     return (
-                        <div key={idx} className={`relative pl-6 transition-all ${isUnlocked ? 'opacity-100' : 'opacity-50'}`}>
-                            <div className={`absolute -left-[9px] top-1 w-4 h-4 rounded-full border-2 ${isUnlocked ? 'bg-pink-500 border-pink-300' : isNext ? 'bg-gray-800 border-yellow-500 animate-pulse' : 'bg-gray-900 border-gray-600'}`}></div>
+                        <div key={idx} className={`relative pl - 6 transition - all ${ isUnlocked ? 'opacity-100' : 'opacity-50' } `}>
+                            <div className={`absolute - left - [9px] top - 1 w - 4 h - 4 rounded - full border - 2 ${ isUnlocked ? 'bg-pink-500 border-pink-300' : isNext ? 'bg-gray-800 border-yellow-500 animate-pulse' : 'bg-gray-900 border-gray-600' } `}></div>
                             <div className="bg-gray-800/50 p-4 rounded-xl border border-gray-700">
                                 <div className="flex justify-between items-start mb-2">
                                     <h4 className="font-bold text-white text-sm">{m.title}</h4>
